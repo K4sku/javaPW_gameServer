@@ -5,29 +5,19 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity @Data
 @Table(name="games")
-public class GameSession {
+public class Match {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private String gameID;
-//    @Column(nullable = false, length = 100)
-//    private Player playerOne;
-////    @Column(nullable = false, length = 100)
-//    private Player playerTwo;
-////    @Column(nullable = false, length = 50)
-//    private Player winner;
-    @Column
-    private boolean isActive = true;
-//    @Column
-//    private Player playerTurn;
     @Column
     private boolean surrendered = false;
     @Column
     private Instant started;
-
     @Column
     private char[][] playerOneShots = new char[10][10];
     @Column
@@ -36,5 +26,13 @@ public class GameSession {
     private char[][] playerTwoShots = new char[10][10];
     @Column
     private char[][] playerTwoShips = new char[10][10];
+    @Column(length = 100)
+    private String winner;
+    @Column
+    private boolean isActive = true;
+
+    @ManyToMany(mappedBy = "matches")
+    private Set<Player> players = new HashSet<>();
+
 
 }

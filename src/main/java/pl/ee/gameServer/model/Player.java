@@ -4,6 +4,8 @@ import lombok.Data;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity @Data
@@ -15,7 +17,6 @@ public class Player {
     private UUID uuid;
     @Column(length = 100)
     private String name;
-
     @Column
     private int wins;
     @Column
@@ -23,4 +24,21 @@ public class Player {
     @Column
     private int score;
 
+    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "player_games",
+            joinColumns = @JoinColumn(name = "player_id"),
+            inverseJoinColumns = @JoinColumn(name = "match_id")
+    )
+    private Set<Match> matches = new HashSet<>();
+
+    public void addMatch(Match match) {
+        this.matches.add(match);
+        match.getPlayers().add(this);
+    }
+
+    public void removeMatch(Match match) {
+        this.matches.remove(match);
+        match.getPlayers().remove(this);
+    }
 }
