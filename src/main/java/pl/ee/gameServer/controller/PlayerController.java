@@ -17,7 +17,8 @@ import java.util.UUID;
 public class PlayerController {
     @Autowired
     PlayerService playerService;
-    MatchMakerService matchMakerService = new MatchMakerService();
+    @Autowired
+    MatchMakerService matchMakerService;
 
     @GetMapping("")
     public List<Player> list() {

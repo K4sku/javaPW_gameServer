@@ -1,6 +1,12 @@
 package pl.ee.gameServer.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -24,13 +30,18 @@ public class Player {
     @Column
     private int score;
 
-    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.EAGER)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToMany(
+            cascade = {CascadeType.MERGE, CascadeType.PERSIST},
+            fetch = FetchType.EAGER
+    )
     @JoinTable(
-            name = "player_games",
-            joinColumns = @JoinColumn(name = "player_id"),
+            name = "players_games",
+            joinColumns = @JoinColumn(name = "player_uuid"),
             inverseJoinColumns = @JoinColumn(name = "match_id")
     )
-    private Set<Match> matches = new HashSet<>();
+    public Set<Match> matches = new HashSet<>();
 
     public void addMatch(Match match) {
         this.matches.add(match);

@@ -8,6 +8,10 @@ import pl.ee.gameServer.model.Player;
 import pl.ee.gameServer.repository.MatchRepository;
 import pl.ee.gameServer.repository.PlayerRepository;
 
+import java.sql.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
@@ -24,19 +28,18 @@ public class MatchMakerService {
     }
 
     public void makeMatch(){
-        Player player1 = null;
-        Player player2;
+        Player[] players = new Player[]{null, null};
+
         while (watingPlayers.size() >= 2) {
-            while ( player1 == null || player1.equals(watingPlayers.peek())) {
-                player1 = watingPlayers.poll();
+            while ( players[0] == null || players[0].equals(watingPlayers.peek())) {
+                players[0] = watingPlayers.poll();
             }
-            player2 = watingPlayers.poll();
+            players[1] = watingPlayers.poll();
             Match newMatch = new Match();
-            player1.addMatch(newMatch);
-            assert player2 != null;
-            player2.addMatch(newMatch);
-            playerRepository.save(player1);
-            playerRepository.save(player2);
+            newMatch.addPlayers(players);
+//            matchRepository.save(newMatch);
+
+            playerRepository.saveAll(Arrays.asList(players));
         }
     }
 }

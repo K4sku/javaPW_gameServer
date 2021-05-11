@@ -14,6 +14,7 @@ import java.util.UUID;
 public class PlayerService {
     @Autowired
     private PlayerRepository playerRepository;
+
     public List<Player> listAllPlayer() {
         return playerRepository.findAll();
     }
