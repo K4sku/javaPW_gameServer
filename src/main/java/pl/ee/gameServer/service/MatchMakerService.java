@@ -8,10 +8,7 @@ import pl.ee.gameServer.model.Player;
 import pl.ee.gameServer.repository.MatchRepository;
 import pl.ee.gameServer.repository.PlayerRepository;
 
-import java.sql.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
@@ -19,26 +16,26 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class MatchMakerService {
     @Autowired
     private MatchRepository matchRepository;
+    @Autowired
     private PlayerRepository playerRepository;
 
-    private final LinkedBlockingQueue<Player> watingPlayers = new LinkedBlockingQueue<>(100);
+    private final LinkedBlockingQueue<Player> waitingPlayers = new LinkedBlockingQueue<>(100);
 
     public boolean addPlayerToQueue(Player player) {
-        return watingPlayers.offer(player);
+        return waitingPlayers.offer(player);
     }
 
     public void makeMatch(){
         Player[] players = new Player[]{null, null};
 
-        while (watingPlayers.size() >= 2) {
-            while ( players[0] == null || players[0].equals(watingPlayers.peek())) {
-                players[0] = watingPlayers.poll();
+        while (waitingPlayers.size() >= 2) {
+            while ( players[0] == null || players[0].equals(waitingPlayers.peek())) {
+                players[0] = waitingPlayers.poll();
             }
-            players[1] = watingPlayers.poll();
+            players[1] = waitingPlayers.poll();
             Match newMatch = new Match();
+            matchRepository.save(newMatch);
             newMatch.addPlayers(players);
-//            matchRepository.save(newMatch);
-
             playerRepository.saveAll(Arrays.asList(players));
         }
     }
