@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.ee.gameServer.model.Match;
 import pl.ee.gameServer.model.Player;
 import pl.ee.gameServer.service.MatchMakerService;
 import pl.ee.gameServer.service.PlayerService;
@@ -54,10 +55,10 @@ public class PlayerController {
     }
 
     @PostMapping("/{uuid}/new_game")
-    public ResponseEntity<?> newMatchmaking(@RequestBody Player player, @PathVariable UUID uuid) {
+    public ResponseEntity<?> newMatchmaking(@RequestBody Match match, @PathVariable UUID uuid) {
         try {
             Player existPlayer = playerService.getPlayer(uuid);
-            player.setUuid(uuid);
+
             matchMakerService.addPlayerToQueue(existPlayer);
             matchMakerService.makeMatch();
 

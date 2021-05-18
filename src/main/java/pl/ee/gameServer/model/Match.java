@@ -5,13 +5,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressWarnings("JpaAttributeTypeInspection")
 @Entity @Data
 @Table(name="games")
 public class Match {
@@ -20,16 +23,18 @@ public class Match {
     private Integer id;
     @Column
     private boolean surrendered = false;
-    @Column
-    private Instant started;
-//    @Column
-//    private char[][] playerOneShots = new char[10][10];
-//    @Column
-//    private char[][] playerOneShips = new char[10][10];
-//    @Column
-//    private char[][] playerTwoShots = new char[10][10];
-//    @Column
-//    private char[][] playerTwoShips = new char[10][10];
+    @CreationTimestamp
+    private LocalDateTime createDateTime;
+    @UpdateTimestamp
+    private LocalDateTime updateDateTime;
+    @Column(columnDefinition = "BLOB")
+    private char[][] playerOneShots = new char[10][10];
+    @Column(columnDefinition = "BLOB")
+    private char[][] playerOneShips = new char[10][10];
+    @Column(columnDefinition = "BLOB")
+    private char[][] playerTwoShots = new char[10][10];
+    @Column(columnDefinition = "BLOB")
+    private char[][] playerTwoShips = new char[10][10];
     @Column(length = 100)
     private String winner;
     @Column
