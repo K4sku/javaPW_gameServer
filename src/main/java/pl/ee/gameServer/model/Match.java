@@ -27,6 +27,14 @@ public class Match {
     private LocalDateTime createDateTime;
     @UpdateTimestamp
     private LocalDateTime updateDateTime;
+
+//    @Column
+//    @OneToMany
+//    private Player playerOne;
+//    @Column
+//    @OneToMany
+//    private Player playerTwo;
+
     @Column(columnDefinition = "BLOB")
     private char[][] playerOneShots = new char[10][10];
     @Column(columnDefinition = "BLOB")
@@ -35,11 +43,12 @@ public class Match {
     private char[][] playerTwoShots = new char[10][10];
     @Column(columnDefinition = "BLOB")
     private char[][] playerTwoShips = new char[10][10];
+
     @Column(length = 100)
-    private String winner;
+    @OneToMany
+    private Player winnerPlayer;
     @Column
     private boolean isActive = true;
-
 
     @JsonIgnoreProperties("matches")
     @ToString.Exclude
@@ -53,5 +62,10 @@ public class Match {
             player.getMatches().add(this);
         }
     }
+
+
+//    public boolean initGame(Player playerOne, char[][] playerOneShips, Player playerTwo, char[][] playerTwoShips){
+//
+//    }
 
 }

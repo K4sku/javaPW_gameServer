@@ -5,10 +5,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.ee.gameServer.model.Match;
+import pl.ee.gameServer.model.Player;
 import pl.ee.gameServer.service.MatchService;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/matches")
@@ -28,6 +30,18 @@ public class MatchController {
             return new ResponseEntity<Match>(match, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<Match>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping("/{id}")
+    public ResponseEntity<?> update(@RequestBody Match match, @PathVariable Integer id) {
+        try {
+            Match existMatch = matchService.getMatch(id);
+            match.setId(id);
+            matchService.saveMatch(match);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 

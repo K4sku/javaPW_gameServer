@@ -1,5 +1,8 @@
 package pl.ee.gameServer.service;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,24 +22,34 @@ public class MatchMakerService {
     @Autowired
     private PlayerRepository playerRepository;
 
-    private final LinkedBlockingQueue<Player> waitingPlayers = new LinkedBlockingQueue<>(100);
+    private final LinkedBlockingQueue<QueuedPlayer> waitingPlayers = new LinkedBlockingQueue<>(100);
 
-    public boolean addPlayerToQueue(Player player) {
-        return waitingPlayers.offer(player);
+    public boolean addPlayerToQueue(Player player, Match match)
+    {
+        QueuedPlayer queuedPlayer = new QueuedPlayer(player, match.getPlayerOneShips());
+        return waitingPlayers.offer(queuedPlayer);
     }
 
     public void makeMatch(){
-        Player[] players = new Player[]{null, null};
+        QueuedPlayer[] queuedPlayers = new QueuedPlayer[]{null, null};
 
         while (waitingPlayers.size() >= 2) {
-            while ( players[0] == null || players[0].equals(waitingPlayers.peek())) {
-                players[0] = waitingPlayers.poll();
+            while ( queuedPlayers[0] == null || queuedPlayers[0].equals(waitingPlayers.peek())) {
+                queuedPlayers[0] = waitingPlayers.poll();
             }
-            players[1] = waitingPlayers.poll();
+            queuedPlayers[1] = waitingPlayers.poll();
             Match newMatch = new Match();
             matchRepository.save(newMatch);
-            newMatch.addPlayers(players);
-            playerRepository.saveAll(Arrays.asList(players));
+            newMatch.addPlayer(queuedPlayers[0]);
+
+            playerRepository.save(queuedPlayers[0].getPlayer());
+            playerRepository.save(queuedPlayers[1].getPlayer());
         }
+    }
+
+    @AllArgsConstructor
+    private class QueuedPlayer {
+        @Getter @Setter private Player player;
+        @Getter @Setter private char[][] playerShips = new char[10][10];
     }
 }

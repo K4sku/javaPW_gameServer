@@ -1,0 +1,73 @@
+spring:
+  config:
+    activate:
+      on-profile: localdev
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/mydb
+    username: root
+    password: rootPassword
+    name: mydb
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  #    url: mysql://34.74.51.210:3306/mydb
+  jpa:
+    properties:
+      hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+      hibernate.format_sql: true
+    show-sql: true
+    hibernate.ddl-auto: create-drop
+  sql:
+    init:
+      platform: mysql
+  cloud:
+    gcp:
+      sql:
+        enabled: false
+server:
+  port: 8080
+#  ssl:
+#    key-store-type: PKCS12
+#    key-store: src/main/resources/ships.p12
+#    key-store-password: boomboom
+#    key-alias: ships
+#  error.whitelabel.enabled: false
+
+management:
+  endpoints:
+    web:
+      base-path: /manage
+      exposure.include: "*"
+  endpoint.health.show-details: always
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: production
+  cloud:
+    gcp:
+      sql:
+        database-name: gameServer
+        instance-connection-name: promising-idea-307007:us-east1:ships-mysqldb-1
+        ip-types: PRIVATE
+#        enabled: true
+  #    credentials.location: file:/path/to/service-account.json
+  datasource:
+#    user
+#    username: gameServerUser
+#    password: P4r4g0nF1skalny
+
+#    root
+    username: root
+    password: 9v5i0kxlEEz4uxCL
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://35.231.100.22:3306/gameServer
+    name: gameServer
+
+  jpa:
+    properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate.ddl-auto: create
+  sql:
+    init:
+      continue-on-error: true
+      enabled: true

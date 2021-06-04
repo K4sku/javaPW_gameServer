@@ -59,7 +59,7 @@ public class PlayerController {
         try {
             Player existPlayer = playerService.getPlayer(uuid);
 
-            matchMakerService.addPlayerToQueue(existPlayer);
+            matchMakerService.addPlayerToQueue(existPlayer, match);
             matchMakerService.makeMatch();
 
             return new ResponseEntity<>(HttpStatus.OK);
