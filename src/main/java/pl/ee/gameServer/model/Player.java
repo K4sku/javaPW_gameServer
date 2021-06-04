@@ -1,18 +1,12 @@
 package pl.ee.gameServer.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity @Data
 @Table(name="players")
@@ -30,26 +24,38 @@ public class Player {
     @Column
     private int score;
 
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @ManyToMany(
-            cascade = {CascadeType.MERGE, CascadeType.PERSIST},
-            fetch = FetchType.EAGER
+    @ToString.Exclude @EqualsAndHashCode.Exclude
+    @OneToMany(
+            mappedBy = "playerOne",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
     )
-    @JoinTable(
-            name = "players_games",
-            joinColumns = @JoinColumn(name = "player_uuid"),
-            inverseJoinColumns = @JoinColumn(name = "match_id")
-    )
-    public Set<Match> matches = new HashSet<>();
+    private List<Match> playerOneGames = new ArrayList<>();
 
-    public void addMatch(Match match) {
-        this.matches.add(match);
-        match.getPlayers().add(this);
+    @ToString.Exclude @EqualsAndHashCode.Exclude
+    @OneToMany(
+            mappedBy = "playerTwo",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Match> playerTwoGames = new ArrayList<>();
+
+    public void addPlayerOneGame(Match match) {
+        playerOneGames.add(match);
+        match.setPlayerOne(this);
+    }
+    public void addPlayerTwoGame(Match match) {
+        playerTwoGames.add(match);
+        match.setPlayerTwo(this);
     }
 
-    public void removeMatch(Match match) {
-        this.matches.remove(match);
-        match.getPlayers().remove(this);
+
+    public void removePlayerOneGame(Match match) {
+        playerOneGames.remove(match);
+        match.setPlayerOne(null);
+    }
+    public void removePlayerTwoGame(Match match) {
+        playerTwoGames.remove(match);
+        match.setPlayerTwo(null);
     }
 }

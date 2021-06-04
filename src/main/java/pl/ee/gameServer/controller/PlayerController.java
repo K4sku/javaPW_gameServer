@@ -1,6 +1,6 @@
 package pl.ee.gameServer.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +16,15 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/players")
 public class PlayerController {
-    @Autowired
+    final
     PlayerService playerService;
-    @Autowired
+    final
     MatchMakerService matchMakerService;
+
+    public PlayerController(PlayerService playerService, MatchMakerService matchMakerService) {
+        this.playerService = playerService;
+        this.matchMakerService = matchMakerService;
+    }
 
     @GetMapping("")
     public List<Player> list() {
@@ -30,9 +35,9 @@ public class PlayerController {
     public ResponseEntity<Player> get(@PathVariable UUID uuid) {
         try {
             Player player = playerService.getPlayer(uuid);
-            return new ResponseEntity<Player>(player, HttpStatus.OK);
+            return new ResponseEntity<>(player, HttpStatus.OK);
         } catch (NoSuchElementException e) {
-            return new ResponseEntity<Player>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
@@ -45,7 +50,7 @@ public class PlayerController {
     @PostMapping("/{uuid}")
     public ResponseEntity<?> update(@RequestBody Player player, @PathVariable UUID uuid) {
         try {
-            Player existPlayer = playerService.getPlayer(uuid);
+//            Player existPlayer = playerService.getPlayer(uuid);
             player.setUuid(uuid);
             playerService.savePlayer(player);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -58,9 +63,9 @@ public class PlayerController {
     public ResponseEntity<?> newMatchmaking(@RequestBody Match match, @PathVariable UUID uuid) {
         try {
             Player existPlayer = playerService.getPlayer(uuid);
-
+            Hibernate.initialize(existPlayer.getPlayerOneGames());
             matchMakerService.addPlayerToQueue(existPlayer, match);
-            matchMakerService.makeMatch();
+//            matchMakerService.matchPlayers();
 
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (NoSuchElementException e) {

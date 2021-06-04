@@ -2,21 +2,21 @@ package pl.ee.gameServer.model;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 @SuppressWarnings("JpaAttributeTypeInspection")
 @Entity @Data
-@Table(name="games")
+@Table(name="matches")
 public class Match {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -28,12 +28,16 @@ public class Match {
     @UpdateTimestamp
     private LocalDateTime updateDateTime;
 
-//    @Column
-//    @OneToMany
-//    private Player playerOne;
-//    @Column
-//    @OneToMany
-//    private Player playerTwo;
+    @ToString.Exclude @EqualsAndHashCode.Exclude
+    @JsonIgnoreProperties({"playerOneGames", "playerTwoGames"})
+    @ManyToOne(fetch = FetchType.LAZY)
+    @Fetch(FetchMode.JOIN)
+    private Player playerOne;
+    @ToString.Exclude @EqualsAndHashCode.Exclude
+    @JsonIgnoreProperties({"playerOneGames", "playerTwoGames"})
+    @ManyToOne(fetch = FetchType.LAZY)
+    @Fetch(FetchMode.JOIN)
+    private Player playerTwo;
 
     @Column(columnDefinition = "BLOB")
     private char[][] playerOneShots = new char[10][10];
@@ -44,28 +48,17 @@ public class Match {
     @Column(columnDefinition = "BLOB")
     private char[][] playerTwoShips = new char[10][10];
 
-    @Column(length = 100)
-    @OneToMany
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "winner_player_uuid")
+    @JsonIncludeProperties({"name","uuid"})
     private Player winnerPlayer;
     @Column
     private boolean isActive = true;
 
-    @JsonIgnoreProperties("matches")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @ManyToMany(mappedBy = "matches")
-    public Set<Player> players = new HashSet<>();
-
-    public void addPlayers(Player[] players) {
-        this.players.addAll(Arrays.asList(players));
-        for (Player player : players ) {
-            player.getMatches().add(this);
-        }
-    }
-
-
-//    public boolean initGame(Player playerOne, char[][] playerOneShips, Player playerTwo, char[][] playerTwoShips){
-//
-//    }
+    @OneToOne
+    @JoinColumn(name = "shooting_player_uuid")
+    @JsonIncludeProperties({"name","uuid"})
+    private Player shootingPlayer;
 
 }

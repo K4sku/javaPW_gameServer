@@ -1,22 +1,22 @@
 package pl.ee.gameServer.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.ee.gameServer.model.Match;
-import pl.ee.gameServer.model.Player;
 import pl.ee.gameServer.service.MatchService;
-
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/matches")
 public class MatchController {
-    @Autowired
+    final
     MatchService matchService;
+
+    public MatchController(MatchService matchService) {
+        this.matchService = matchService;
+    }
 
     @GetMapping("")
     public List<Match> list(){
@@ -27,16 +27,15 @@ public class MatchController {
     public ResponseEntity<Match> get(@PathVariable Integer id){
         try {
             Match match = matchService.getMatch(id);
-            return new ResponseEntity<Match>(match, HttpStatus.OK);
+            return new ResponseEntity<>(match, HttpStatus.OK);
         } catch (NoSuchElementException e) {
-            return new ResponseEntity<Match>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/{id}")
     public ResponseEntity<?> update(@RequestBody Match match, @PathVariable Integer id) {
         try {
-            Match existMatch = matchService.getMatch(id);
             match.setId(id);
             matchService.saveMatch(match);
             return new ResponseEntity<>(HttpStatus.OK);

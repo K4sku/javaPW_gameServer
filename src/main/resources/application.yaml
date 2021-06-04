@@ -1,14 +1,19 @@
 spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+---
+spring:
   config:
     activate:
-      on-profile: localdev
+      on-profile: localDev
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/mydb
     username: root
     password: rootPassword
     name: mydb
     driver-class-name: com.mysql.cj.jdbc.Driver
-  #    url: mysql://34.74.51.210:3306/mydb
   jpa:
     properties:
       hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
@@ -18,10 +23,6 @@ spring:
   sql:
     init:
       platform: mysql
-  cloud:
-    gcp:
-      sql:
-        enabled: false
 server:
   port: 8080
 #  ssl:
@@ -37,36 +38,33 @@ management:
       base-path: /manage
       exposure.include: "*"
   endpoint.health.show-details: always
-
+---
+spring:
+  config:
+    activate:
+      on-profile: productionDev
+  datasource:
+      url: mysql://34.74.51.210:3306/mydb
 
 ---
 spring:
   config:
     activate:
       on-profile: production
-  cloud:
-    gcp:
-      sql:
-        database-name: gameServer
-        instance-connection-name: promising-idea-307007:us-east1:ships-mysqldb-1
-        ip-types: PRIVATE
-#        enabled: true
-  #    credentials.location: file:/path/to/service-account.json
   datasource:
 #    user
 #    username: gameServerUser
 #    password: P4r4g0nF1skalny
-
 #    root
     username: root
     password: 9v5i0kxlEEz4uxCL
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://35.231.100.22:3306/gameServer
+    url: jdbc:mysql://10.52.160.2:3306/gameServer
     name: gameServer
 
   jpa:
     properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
-    hibernate.ddl-auto: create
+    hibernate.ddl-auto: validate
   sql:
     init:
       continue-on-error: true
