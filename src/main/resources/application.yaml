@@ -17,14 +17,16 @@ spring:
   jpa:
     properties:
       hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
-      hibernate.format_sql: true
-    show-sql: true
-    hibernate.ddl-auto: create-drop
+#      hibernate.format_sql: true
+#    show-sql: true
+    hibernate.ddl-auto: validate
   sql:
     init:
       platform: mysql
 server:
   port: 8080
+  tomcat:
+    connection-timeout: -1
 #  ssl:
 #    key-store-type: PKCS12
 #    key-store: src/main/resources/ships.p12
@@ -38,6 +40,11 @@ management:
       base-path: /manage
       exposure.include: "*"
   endpoint.health.show-details: always
+logging:
+  level:
+    pl:
+      ee:
+        gameServer: TRACE
 ---
 spring:
   config:
@@ -69,3 +76,7 @@ spring:
     init:
       continue-on-error: true
       enabled: true
+logging:
+  level: debug
+  file:
+    name: ships.log

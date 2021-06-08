@@ -7,6 +7,7 @@ import pl.ee.gameServer.model.Match;
 import pl.ee.gameServer.repository.MatchRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @Service
@@ -23,12 +24,11 @@ public class MatchService {
         matchRepository.save(match);
     }
 
-    public Match getMatch(Integer id) {
-        return matchRepository.findById(id).get();
+    public Match getMatch(UUID uuid) {
+        return matchRepository.findById(uuid).get();
     }
 
-    public void deleteMatch(Integer id) {
-        matchRepository.deleteById(id);
+    public void deleteMatch(UUID uuid) {
+        matchRepository.deleteById(uuid);
     }
-
 }

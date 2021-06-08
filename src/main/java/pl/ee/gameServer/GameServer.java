@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class GameServer {
 
+    public static final int BOARD_SIZE = 10;
+
+
     public static void main(String[] args) {
 
         SpringApplication.run(GameServer.class, args);

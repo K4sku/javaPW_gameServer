@@ -11,7 +11,7 @@
 
     <groupId>pl.ee</groupId>
     <artifactId>gameServer</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.5</version>
     <name>shipsGameServer</name>
     <description>Server for ships game</description>
 
@@ -84,8 +84,11 @@
             <scope>runtime</scope>
         </dependency>
 
-
-
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.5.2</version>
+        </dependency>
     </dependencies>
 
     <build>

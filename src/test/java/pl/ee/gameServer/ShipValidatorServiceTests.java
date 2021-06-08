@@ -2,34 +2,23 @@ package pl.ee.gameServer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pl.ee.gameServer.service.BoardService;
 import pl.ee.gameServer.service.ShipValidatorService;
 import static org.assertj.core.api.Assertions.*;
 
 public class ShipValidatorServiceTests {
 
-    char[][] validGameMap = new char[5][5];
-    char[][] invalidGameMap = new char[5][5];
+    char[][] validGameMap = new char[10][10];
+    char[][] invalidGameMap = new char[10][10];
 
     @BeforeEach
-    void setTestMaps(){
-        validGameMap[0][0]='a';
-        validGameMap[0][1]='a';
-        validGameMap[0][2]='a';
-        validGameMap[0][3]='a';
+    void setTestMaps() throws Exception {
+        String validInput= "0000000000111100000000000000000000222000000000000000300500000030050004003005000400000500000000000000";
+        validGameMap = BoardService.parseToCharArray(validInput);
 
-        validGameMap[4][1]='b';
-        validGameMap[3][1]='b';
+        String invalidInput= "6600000000111100000000000000000000222000000000000000300500000030050004003005000400000500000000000000";
+        invalidGameMap = BoardService.parseToCharArray(invalidInput);
 
-        //ships a and c are in contact
-        invalidGameMap[0][1]='a';
-        invalidGameMap[0][2]='a';
-        invalidGameMap[0][3]='a';
-
-        invalidGameMap[4][1]='b';
-        invalidGameMap[3][1]='b';
-
-        invalidGameMap[1][1]='c';
-        invalidGameMap[1][2]='c';
     }
 
 

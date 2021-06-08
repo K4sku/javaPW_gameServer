@@ -3,6 +3,8 @@ package pl.ee.gameServer.service;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.ee.gameServer.model.Match;
@@ -10,8 +12,10 @@ import pl.ee.gameServer.model.Player;
 import pl.ee.gameServer.repository.MatchRepository;
 import pl.ee.gameServer.repository.PlayerRepository;
 
+
 import java.util.Arrays;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
@@ -19,6 +23,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class MatchMakerService {
     private final MatchRepository matchRepository;
     private final PlayerRepository playerRepository;
+    private static final Logger LOGGER = LoggerFactory.getLogger(MatchMakerService.class);
 
     private final LinkedBlockingQueue<QueuedPlayer> waitingPlayers = new LinkedBlockingQueue<>(100);
 
@@ -27,28 +32,36 @@ public class MatchMakerService {
         this.playerRepository = playerRepository;
     }
 
-    public void addPlayerToQueue(Player player, Match match)
+    public Match addPlayerToQueue(Player player, char[][] board)
     {
-        QueuedPlayer queuedPlayer = new QueuedPlayer(player, match.getPlayerOneShips());
+        QueuedPlayer queuedPlayer = new QueuedPlayer(player, board);
+        LOGGER.info("Adding player {} : {} to matchmaking queue", player.getName(), player.getUuid());
         waitingPlayers.offer(queuedPlayer);
-        matchPlayers();
+        return matchPlayers();
     }
 
-    public void matchPlayers(){
+    public Match matchPlayers(){
         QueuedPlayer[] queuedPlayers = new QueuedPlayer[]{null, null};
-
         while (waitingPlayers.size() >= 2) {
-            while ( queuedPlayers[0] == null || queuedPlayers[0].equals(waitingPlayers.peek())) {
+            while ( queuedPlayers[0] == null || (waitingPlayers.peek() != null && queuedPlayers[0].getPlayer().equals(waitingPlayers.peek().getPlayer()))) {
                 queuedPlayers[0] = waitingPlayers.poll();
+                LOGGER.trace("Player {} is duplicated in queue", queuedPlayers[0].getPlayer().getName());
             }
-            queuedPlayers[1] = waitingPlayers.poll();
-            initGame(queuedPlayers[0].getPlayer(), queuedPlayers[0].getPlayerShips(),
-                    queuedPlayers[1].getPlayer(), queuedPlayers[1].getPlayerShips());
+            if(waitingPlayers.size() > 0) {
+                queuedPlayers[1] = waitingPlayers.poll();
+                LOGGER.info("Creating game {} vs {}", queuedPlayers[0].getPlayer().getName(), queuedPlayers[1].getPlayer().getName());
+                return initGame(queuedPlayers[0].getPlayer(), queuedPlayers[0].getPlayerShips(),
+                        queuedPlayers[1].getPlayer(), queuedPlayers[1].getPlayerShips());
+            } else {
+                waitingPlayers.offer(queuedPlayers[0]);
+            }
         }
+        return null;
     }
 
-    public void initGame(Player playerOne, char[][] playerOneShips, Player playerTwo, char[][] playerTwoShips) {
+    public Match initGame(Player playerOne, char[][] playerOneShips, Player playerTwo, char[][] playerTwoShips) {
         Match match = new Match();
+        match.setUuid(UUID.randomUUID());
         match.setPlayerOneShips(playerOneShips);
         match.setPlayerTwoShips(playerTwoShips);
         Random rd = new Random();
@@ -63,6 +76,7 @@ public class MatchMakerService {
         playerRepository.save(playerOne);
         playerTwo.addPlayerTwoGame(match);
         playerRepository.save(playerTwo);
+        return match;
     }
 
     @AllArgsConstructor

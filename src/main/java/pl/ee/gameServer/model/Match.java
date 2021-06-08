@@ -6,21 +6,23 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.*;
+import pl.ee.gameServer.GameServer;
 
 import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @SuppressWarnings("JpaAttributeTypeInspection")
 @Entity @Data
 @Table(name="matches")
 public class Match {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
+    @Column(nullable = false, columnDefinition = "BINARY(16)")
+    @Type(type="org.hibernate.type.UUIDBinaryType")
+    private UUID uuid;
     @Column
     private boolean surrendered = false;
     @CreationTimestamp
@@ -40,13 +42,13 @@ public class Match {
     private Player playerTwo;
 
     @Column(columnDefinition = "BLOB")
-    private char[][] playerOneShots = new char[10][10];
+    private char[][] playerOneShots = new char[GameServer.BOARD_SIZE][GameServer.BOARD_SIZE];
     @Column(columnDefinition = "BLOB")
-    private char[][] playerOneShips = new char[10][10];
+    private char[][] playerOneShips = new char[GameServer.BOARD_SIZE][GameServer.BOARD_SIZE];
     @Column(columnDefinition = "BLOB")
-    private char[][] playerTwoShots = new char[10][10];
+    private char[][] playerTwoShots = new char[GameServer.BOARD_SIZE][GameServer.BOARD_SIZE];
     @Column(columnDefinition = "BLOB")
-    private char[][] playerTwoShips = new char[10][10];
+    private char[][] playerTwoShips = new char[GameServer.BOARD_SIZE][GameServer.BOARD_SIZE];
 
 
     @OneToOne(fetch = FetchType.LAZY)
