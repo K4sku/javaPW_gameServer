@@ -56,7 +56,7 @@ public class Match {
     @JsonIncludeProperties({"name","uuid"})
     private Player winnerPlayer;
     @Column
-    private boolean isActive = true;
+    private boolean isActive;
 
     @OneToOne
     @JoinColumn(name = "shooting_player_uuid")

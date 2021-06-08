@@ -31,4 +31,6 @@ public class MatchService {
     public void deleteMatch(UUID uuid) {
         matchRepository.deleteById(uuid);
     }
+
+    public List<Match> listNotStartedGames() {return matchRepository.findNotStartedGames(); }
 }

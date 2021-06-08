@@ -1,13 +1,11 @@
 package pl.ee.gameServer.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import pl.ee.gameServer.model.Match;
 import pl.ee.gameServer.model.Player;
@@ -16,7 +14,6 @@ import pl.ee.gameServer.service.MatchMakerService;
 import pl.ee.gameServer.service.PlayerService;
 import pl.ee.gameServer.service.ShipValidatorService;
 
-import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -84,8 +81,8 @@ public class PlayerController {
                 Player existPlayer = playerService.getPlayer(uuid);
                 LOGGER.debug("Player found for uuid, player name {}", existPlayer.getName());
                 Hibernate.initialize(existPlayer.getPlayerOneGames());
-                //create new game
-                match = matchMakerService.addPlayerToQueue(existPlayer, board);
+                matchMakerService.addPlayerToQueue(existPlayer, board);
+                match = matchMakerService.matchPlayers();
           }
             return new ResponseEntity<>(match, HttpStatus.OK);
         } catch (Exception e) {

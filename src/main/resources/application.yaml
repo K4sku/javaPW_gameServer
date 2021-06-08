@@ -12,7 +12,7 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/mydb
     username: root
     password: rootPassword
-    name: mydb
+    name: gameServer
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     properties:
@@ -45,6 +45,8 @@ logging:
     pl:
       ee:
         gameServer: TRACE
+  file:
+    name: ships.log
 ---
 spring:
   config:
@@ -77,6 +79,9 @@ spring:
       continue-on-error: true
       enabled: true
 logging:
-  level: debug
+  level:
+    pl:
+      ee:
+        gameServer: TRACE
   file:
     name: ships.log
