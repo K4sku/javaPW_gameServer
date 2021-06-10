@@ -6,13 +6,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
 import pl.ee.gameServer.model.Match;
 import pl.ee.gameServer.model.Player;
 import pl.ee.gameServer.service.BoardService;
 import pl.ee.gameServer.service.MatchMakerService;
 import pl.ee.gameServer.service.PlayerService;
-import pl.ee.gameServer.service.ShipValidatorService;
 
 import java.util.List;
 import java.util.Map;
@@ -70,24 +68,20 @@ public class PlayerController {
     }
 
     @PostMapping("/{uuid}/new_game")
-    public ResponseEntity<Match> newMatchmaking(@RequestBody Map<String, Object> body, @PathVariable UUID uuid, UriComponentsBuilder builder) {
+    public ResponseEntity<Match> newMatchmaking(@RequestBody Map<String, Object> body, @PathVariable UUID uuid) {
         LOGGER.info("Received new match request for player uuid: {}", uuid);
         LOGGER.debug("Post body: {}", body.toString());
-        Match match = null;
+        Match match;
         try {
-            //validate ship placement
             char[][] board = BoardService.parseToCharArray((String) body.get("board"));
-            if (ShipValidatorService.validateShipPlacement(board)) {
-                Player existPlayer = playerService.getPlayer(uuid);
-                LOGGER.debug("Player found for uuid, player name {}", existPlayer.getName());
-                Hibernate.initialize(existPlayer.getPlayerOneGames());
-                matchMakerService.addPlayerToQueue(existPlayer, board);
-                match = matchMakerService.matchPlayers();
-          }
+            Player existPlayer = playerService.getPlayer(uuid);
+            LOGGER.debug("Player found for uuid, player name {}", existPlayer.getName());
+            Hibernate.initialize(existPlayer.getPlayerOneGames());
+            matchMakerService.addPlayerToQueue(existPlayer, board);
+            match = matchMakerService.matchPlayers();
             return new ResponseEntity<>(match, HttpStatus.OK);
         } catch (Exception e) {
             LOGGER.debug(e.toString());
-            LOGGER.trace("Board not valid");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }

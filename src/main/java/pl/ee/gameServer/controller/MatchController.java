@@ -20,9 +20,11 @@ public class MatchController {
     private static final Logger LOGGER = LoggerFactory.getLogger(MatchController.class);
 
     final MatchService matchService;
+    final GameLoopService gameLoopService;
 
-    public MatchController(MatchService matchService) {
+    public MatchController(MatchService matchService, GameLoopService gameLoopService) {
         this.matchService = matchService;
+        this.gameLoopService = gameLoopService;
     }
 
     @GetMapping("")
@@ -55,12 +57,31 @@ public class MatchController {
     public ResponseEntity<?> shoot(@RequestBody Map<String, Object> body, @PathVariable UUID uuid){
         try {
             UUID playerUuid = UUID.fromString((String) body.get("player-uuid"));
-            Coordinate shootCoordinate = new Coordinate(Integer.parseInt((String) body.get("x")), Integer.parseInt((String) body.get("y")));
-
+            Coordinate shootCoordinate = new Coordinate((Integer) body.get("x"),(Integer) body.get("y"));
+            LOGGER.trace("POST: PATH: /matches/{}/shoot | Player: {} | Coordinate: {}", uuid, playerUuid, shootCoordinate);
+            var response = gameLoopService.shoot(uuid, playerUuid, shootCoordinate);
+            if(response.getFirst()!= -1) {
+                Match match = matchService.getMatch(uuid);
+                return new ResponseEntity<>(match, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(response.getSecond(), HttpStatus.BAD_REQUEST);
+            }
         } catch (Exception e) {
             LOGGER.debug(e.toString());
         }
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @PostMapping("/{uuid}/surrender")
+    public ResponseEntity<?> surrender(@RequestBody Map<String, Object> body, @PathVariable UUID uuid) {
+        try {
+            UUID playerUuid = UUID.fromString((String) body.get("player-uuid"));
+            Match match = matchService.getMatch(uuid);
+            gameLoopService.surrender(match, playerUuid);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @DeleteMapping("/{uuid}")

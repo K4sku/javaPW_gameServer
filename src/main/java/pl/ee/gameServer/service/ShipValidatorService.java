@@ -49,9 +49,6 @@ public class ShipValidatorService {
         return true;
     }
 
-    private static boolean isInValidRange(int x, int y){
-        //sprawdzanie zakresu
-        return (x > 0 && x < (GameServer.BOARD_SIZE-1)) && (y > 0 && y < (GameServer.BOARD_SIZE-1));
-    }
+
 
 }

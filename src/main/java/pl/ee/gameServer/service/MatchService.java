@@ -1,6 +1,5 @@
 package pl.ee.gameServer.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.ee.gameServer.model.Match;
@@ -9,12 +8,14 @@ import pl.ee.gameServer.repository.MatchRepository;
 import java.util.List;
 import java.util.UUID;
 
-
 @Service
 @Transactional
 public class MatchService {
-    @Autowired
-    private MatchRepository matchRepository;
+    private final MatchRepository matchRepository;
+
+    public MatchService(MatchRepository matchRepository) {
+        this.matchRepository = matchRepository;
+    }
 
     public List<Match> listAllMatch() {
         return matchRepository.findAll();
@@ -25,7 +26,8 @@ public class MatchService {
     }
 
     public Match getMatch(UUID uuid) {
-        return matchRepository.findById(uuid).get();
+        if(matchRepository.findById(uuid).isPresent()) return matchRepository.findById(uuid).get();
+        return null;
     }
 
     public void deleteMatch(UUID uuid) {

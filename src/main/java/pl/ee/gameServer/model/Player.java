@@ -1,5 +1,6 @@
 package pl.ee.gameServer.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -57,5 +58,13 @@ public class Player {
     public void removePlayerTwoGame(Match match) {
         playerTwoGames.remove(match);
         match.setPlayerTwo(null);
+    }
+
+    @JsonIgnore
+    public List<Match> getPlayerGames(){
+        List<Match> playerGames = new ArrayList<>();
+        playerGames.addAll(playerOneGames);
+        playerGames.addAll(playerTwoGames);
+        return playerGames;
     }
 }
