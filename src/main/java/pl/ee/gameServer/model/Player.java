@@ -61,10 +61,21 @@ public class Player {
     }
 
     @JsonIgnore
-    public List<Match> getPlayerGames(){
+    public List<Match> getPlayerGames() {
         List<Match> playerGames = new ArrayList<>();
         playerGames.addAll(playerOneGames);
         playerGames.addAll(playerTwoGames);
         return playerGames;
+    }
+
+    @JsonIgnore
+    public void updateScore(boolean victory) {
+        if (victory) {
+            wins += 1;
+            score += 2;
+        } else {
+            looses += 1;
+            score += 1;
+        }
     }
 }

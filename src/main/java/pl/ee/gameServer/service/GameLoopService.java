@@ -10,7 +10,9 @@ import pl.ee.gameServer.model.Match;
 import pl.ee.gameServer.model.Player;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+
 @Service
 @Transactional
 public class GameLoopService {
@@ -24,9 +26,16 @@ public class GameLoopService {
         this.playerService = playerService;
     }
 
+    /**
+     * Verifies and registers shoots taken by players
+     * @param matchUuid     uuid of match
+     * @param playerUuid    uuid of player that took the shot
+     * @param shootLocation coordinate of shoot
+     * @return first element of Pair is int code [-1 = error, 0 = missed shot, 1..5 = shipType if shot hit, 10 = show won the game], second element is message send to frontend.
+     */
     public Pair<Integer, String> shoot(UUID matchUuid, UUID playerUuid, Coordinate shootLocation) {
-        boolean playerOneShooting;
-        boolean hit;
+        int hit;
+        boolean sink = false;
         try {
             Match match = matchService.getMatch(matchUuid); //check if game exist
             Player shootingPlayer = playerService.getPlayer(playerUuid); //check if player exist
@@ -47,89 +56,124 @@ public class GameLoopService {
                 return Pair.of(-1, "Shoot is outside of board");
             }
 
-            //check if shoot is not duplicated
-            playerOneShooting = match.getPlayerOne().equals(shootingPlayer);
-            if (playerOneShooting) {
-                if (wasNotShoot(match.getPlayerOneShots(), shootLocation)) {
-                    hit = isHit(match.getPlayerTwoShips(), shootLocation);
-                    registerPlayerOneShot(match, shootLocation);
-                    LOGGER.trace("It's playerOne shoot at {} shot was {}", shootLocation, hit);
-
-                    if(checkWinCondition(match)) return Pair.of(10, "Game over");
-                    if (hit) return Pair.of(1, "HIT");
-                    return Pair.of(2, "MISS");
-                } else {
-                    LOGGER.trace("PlayerOne already shoot at field {}", shootLocation);
-                    return Pair.of(-1, "Player already shoot at that field");
+            Player opponent = match.getOpponent(shootingPlayer);
+            if (wasNotShoot(match.selectPlayersShots(shootingPlayer), shootLocation)) {
+                hit = isHit(match.selectPlayersShips(opponent), shootLocation);
+                LOGGER.trace("isHit returned: {}", hit);
+                if (0 < hit && hit < 6) {
+                    sink = isSunk(match.selectPlayersShipsRemainingMap(opponent), hit);
+                    LOGGER.trace("isSunk returned {}", sink);
                 }
+                registerPlayerShot(match, shootingPlayer, shootLocation, hit, sink);
+                LOGGER.trace("It's playerOne shoot at {} shot landed on {}, sink: {}", shootLocation, hit, sink);
+
+                if (checkWinCondition(match)) return Pair.of(10, "Game over");
+                if (hit != 0 && hit != -1) return Pair.of(hit, "HIT");
+                return Pair.of(0, "MISS");
             } else {
-                if (wasNotShoot(match.getPlayerTwoShots(), shootLocation)) {
-                    hit = isHit(match.getPlayerOneShips(), shootLocation);
-                    registerPlayerTwoShot(match, shootLocation);
-                    LOGGER.trace("It's playerTwo shoot at {} shot was {}", shootLocation, hit);
-
-                    if(checkWinCondition(match)) return Pair.of(10, "Game over");
-                    if (hit) return Pair.of(1, "HIT");
-                    return Pair.of(2, "MISS");
-                } else {
-                    LOGGER.trace("PlayerTwo already shoot at field {}", shootLocation);
-                    return Pair.of(-1, "Player already shoot at that field");
-                }
+                LOGGER.trace("Player already shoot at field {}", shootLocation);
+                return Pair.of(-1, "Player already shoot at that field");
             }
+
         } catch (Exception e) {
             LOGGER.debug(String.valueOf(e));
         }
         return null;
     }
 
+    /**
+     * Validates that shot was inside game board bounds
+     * @param shot coordinate of shot
+     * @return true if shot coordinates are valid, otherwise false
+     */
     private boolean isInValidRange(Coordinate shot) {
         return (shot.x >= 0 && shot.x <= (GameServer.BOARD_SIZE - 1)) && (shot.y >= 0 && shot.y <= (GameServer.BOARD_SIZE - 1));
     }
 
+    /**
+     * Checks if coordinates were not shot before
+     * @param board board to validate
+     * @param shot  coordinate of shot
+     * @return true if there is no shot, otherwise false
+     */
     private boolean wasNotShoot(char[][] board, Coordinate shot) {
-        return board[shot.x][shot.y] == '0';
+        return board[shot.y][shot.x] == '0';
     }
 
-    private boolean isHit(char[][] board, Coordinate shot) {
-        return board[shot.x][shot.y] != '0';
+    /**
+     * Validates hit
+     * @param board board to validate
+     * @param shot  coordinate of shot
+     * @return true if ship was hit, otherwise false
+     */
+    private int isHit(char[][] board, Coordinate shot) {
+        return Character.getNumericValue(board[shot.y][shot.x]);
     }
 
-    private void registerPlayerOneShot(Match match, Coordinate shot) {
+    /**
+     * Checks if shot sunk the ship (all ship fields were hit)
+     * @param playerRemainingShipMap map of ship fields not hit
+     * @param shipType               type of ship that was hit
+     * @return false if last field of ship was hit
+     */
+    private boolean isSunk(Map<Character, Integer> playerRemainingShipMap, int shipType) {
+        LOGGER.debug("isSunk: \n" +
+                        "playerRemainingShipMap: {} \n" +
+                        "shipType: {}",
+                playerRemainingShipMap, shipType);
+        return (playerRemainingShipMap.get(Character.forDigit(shipType, 10)) == 1);
+    }
+
+    /**
+     * Register player shot, updates match model and changes turn
+     * @param match match instance
+     * @param shootingPlayer shooting player instance
+     * @param shot shot coordinate
+     * @param hit shipType
+     * @param sunk if last shot sunk a shipType ship
+     */
+    private void registerPlayerShot(Match match, Player shootingPlayer, Coordinate shot, int hit, boolean sunk) {
         match.setLastShot(shot);
-        char[][] playerOneShots = match.getPlayerOneShots();
-        playerOneShots[shot.y][shot.x] = '1';
-        match.setPlayerOneShots(playerOneShots);
-        match.decrementPlayerTwoFieldsRemaining();
-        match.setShootingPlayer(match.getPlayerTwo());
+        match.setLastShotHit(hit);
+        match.setLastShotSunk(sunk);
+        char[][] playerShots = match.selectPlayersShots(shootingPlayer);
+        playerShots[shot.y][shot.x] = '1';
+        match.setPlayersShots(shootingPlayer, playerShots);
+        if (hit != 0 && hit != -1) match.registerHit(shootingPlayer, hit);
+        match.setOpponentsTurn(shootingPlayer);
         matchService.saveMatch(match);
     }
 
-    private void registerPlayerTwoShot(Match match, Coordinate shot) {
-        match.setLastShot(shot);
-        var playerTwoShots = match.getPlayerTwoShots();
-        playerTwoShots[shot.y][shot.x] = '1';
-        match.setPlayerOneShots(playerTwoShots);
-        match.decrementPlayerOneFieldsRemaining();
-        match.setShootingPlayer(match.getPlayerOne());
-        matchService.saveMatch(match);
-    }
-
+    /**
+     * Checks if game was surrendered or win game conditions were met
+     * @param match match instance to check
+     * @return true if game is won, otherwise false
+     */
     private static boolean checkWinCondition(Match match) {
         if (match.isSurrendered()) return true;
-        if (match.getPlayerOneFieldsRemaining() == 0) {
+        if (match.getPlayerOneFieldsRemainingCount() == 0) {
             match.setWinnerPlayer(match.getPlayerTwo());
+            match.getPlayerOne().updateScore(false);
+            match.getPlayerTwo().updateScore(true);
             return true;
         }
-        if (match.getPlayerTwoFieldsRemaining() == 0) {
+        if (match.getPlayerTwoFieldsRemainingCount() == 0) {
             match.setWinnerPlayer(match.getPlayerOne());
+            match.getPlayerOne().updateScore(true);
+            match.getPlayerTwo().updateScore(false);
             return true;
         }
         return false;
     }
 
+    /**
+     * Set's player winner and surrender flag
+     * @param match match instance
+     * @param playerUuid player that surrendered game
+     */
     public void surrender(Match match, UUID playerUuid) {
         try {
-            Player player = playerService.getPlayer(playerUuid); //check if player exist
+            Player player = playerService.getPlayer(playerUuid);
             match.setSurrendered(true);
             List<Player> matchPlayersList = match.getPlayersList();
             matchPlayersList.remove(player);

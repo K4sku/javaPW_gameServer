@@ -24,7 +24,8 @@ public class PlayerService {
     }
 
     public Player getPlayer(UUID uuid) {
-        return playerRepository.findById(uuid).get();
+        if(playerRepository.findById(uuid).isPresent()) return playerRepository.findById(uuid).get();
+        return null;
     }
 
     public void deletePlayer(UUID uuid) {

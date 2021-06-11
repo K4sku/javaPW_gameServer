@@ -19,7 +19,7 @@ spring:
       hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
 #      hibernate.format_sql: true
 #    show-sql: true
-    hibernate.ddl-auto: create
+    hibernate.ddl-auto: create-drop
   sql:
     init:
       platform: mysql

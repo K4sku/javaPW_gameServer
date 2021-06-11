@@ -43,20 +43,23 @@ public class MatchMakerService {
     }
 
     public Match matchPlayers(){
+        LOGGER.debug("waitingPlayers queue: "+ waitingPlayers);
         QueuedPlayer playerOne = waitingPlayers.poll(); //take p1 from queue head
         if (playerOne != null) {
-            LOGGER.trace("Player one from queue {}", playerOne.getPlayer().getUuid());
+            LOGGER.trace("Pool playerOne from queue {}", playerOne.getPlayer().getUuid());
             QueuedPlayer playerTwo = waitingPlayers.peek(); //get p2, but leave on queue head
             if (playerTwo != null) {
-                LOGGER.trace("Player two from queue {}", playerTwo.getPlayer().getUuid());
+                LOGGER.trace("Peek playerTwo from queue {}", playerTwo.getPlayer().getUuid());
                 if (playerOne.getPlayer().equals(playerTwo.getPlayer())) {
-                    LOGGER.trace("PlayerOne and PlayerTwo are the same, putting player one at the end of queue");
+                    LOGGER.trace("PlayerOne and PlayerTwo are the same, putting playerOne at the end of queue");
                     waitingPlayers.offer(playerOne); // put p1 on back of queue
+                    LOGGER.debug("waitingPlayers queue: "+ waitingPlayers);
                     return matchPlayers();
                 } else {
                     //take p2 from queue and make game with p1 and p2
-                    LOGGER.trace("Two different players. Starting new match.");
+                    LOGGER.trace("Two different players. Pooling playerTwo Starting new match.");
                     waitingPlayers.poll();
+                    LOGGER.debug("waitingPlayers queue: "+ waitingPlayers);
                     return initGame(playerOne.getPlayer(), playerOne.getPlayerShips(), playerTwo.getPlayer(), playerTwo.getPlayerShips());
                 }
             } else if (waitingMatches.size() >0){ //if there are matches waiting for 2nd player
@@ -64,11 +67,12 @@ public class MatchMakerService {
                 int matchQueueSize = waitingMatches.size();
                 Match waitingMatch;
                 for (int i =0; i < matchQueueSize; i++){ //iterate over queue
+                    LOGGER.debug("waitingMatches queue size: {}, first match {}", waitingMatches.size(), waitingMatches.peek());
                     waitingMatch = waitingMatches.poll();
                     if (waitingMatch != null) { //avoid NullPointerException
-                        LOGGER.trace("There is game waiting matchUUID: {} | playerOne uuid: {}", waitingMatch.getUuid(), waitingMatch.getPlayerOne().getUuid());
+                        LOGGER.trace("Pooling matches queue. There is game waiting matchUUID: {} | playerOne uuid: {}", waitingMatch.getUuid(), waitingMatch.getPlayerOne().getUuid());
                         if (waitingMatch.getPlayerOne().equals(playerOne.getPlayer())) { //avoid matching player with himself
-                            LOGGER.trace("Player already in game");
+                            LOGGER.trace("Player already in game, putting match back to queue");
                             waitingMatches.offer(waitingMatch); //put it back at the end of queue
                         } else {
                             LOGGER.trace("Adding player to the game as playerTwo");
@@ -79,9 +83,10 @@ public class MatchMakerService {
                 }
             } else {
                 //make game with p1, place game to waitingMatches and return game to response
-                LOGGER.trace("Start game with one player and add it to the queue.");
+                LOGGER.trace("waitingMatches queue is empty. Start game with one player and add it to the queue.");
                 Match match = initOnePlayerGame(playerOne.getPlayer(), playerOne.getPlayerShips());
                 waitingMatches.offer(match);
+                LOGGER.debug("waitingMatches queue size: {}, first match {}", waitingMatches.size(), waitingMatches.peek());
                 return match;
             }
         }
@@ -95,8 +100,10 @@ public class MatchMakerService {
         LOGGER.trace("New game UUID: {}", match.getUuid());
         match.setPlayerOneShips(playerOneShips);
         match.calculateAndSetPlayerOneFieldsRemaining();
+        match.calculateAndSetPlayerOneShipsRemainingMap();
         match.setPlayerTwoShips(playerTwoShips);
         match.calculateAndSetPlayerTwoFieldsRemaining();
+        match.calculateAndSetPlayerTwoShipsRemainingMap();
         match.setActive(true);
         LOGGER.trace("Match set as active");
         Random rd = new Random();
@@ -123,30 +130,19 @@ public class MatchMakerService {
         LOGGER.trace("New game UUID: {}", match.getUuid());
         match.setPlayerOneShips(playerOneShips);
         match.calculateAndSetPlayerOneFieldsRemaining();
-
-//        Player mockP2 = new Player();
-//        mockP2.setUuid(UUID.randomUUID());
-//        mockP2.setName("Testus");
-//        match.setPlayerTwo(mockP2);
-//        LOGGER.debug("Adding mock player Testus with uuid {}", mockP2.getUuid());
-//        playerRepository.save(mockP2);
-//        match.setPlayerTwoShips(playerOneShips);
-//        match.setActive(true);
-//        match.setShootingPlayer(playerOne);
-//        LOGGER.trace("Shooting player {}", playerOne.getUuid());
+        match.calculateAndSetPlayerOneShipsRemainingMap();
 
         matchRepository.save(match);
         playerOne.addPlayerOneGame(match);
         playerRepository.save(playerOne);
 
-//        mockP2.addPlayerTwoGame(match);
-//        playerRepository.save(mockP2);
         return match;
     }
 
     public void fillPlayerTwo(Match match, Player playerTwo, char[][] playerTwoShips){
         match.setPlayerTwoShips(playerTwoShips);
         match.calculateAndSetPlayerTwoFieldsRemaining();
+        match.calculateAndSetPlayerTwoShipsRemainingMap();
         match.setActive(true);
         LOGGER.trace("Match set as active");
         Random rd = new Random();
@@ -178,6 +174,11 @@ public class MatchMakerService {
             if (this == o) return true;
             if (!(o instanceof QueuedPlayer)) return false;
             return player != null && player.equals(((QueuedPlayer) o).getPlayer()) && playerShips != null && Arrays.deepEquals(playerShips, ((QueuedPlayer) o).getPlayerShips());
+        }
+
+        @Override
+        public String toString(){
+            return "player [uuid: "+player.getUuid().toString()+" name: "+player.getName()+"]";
         }
     }
 }
