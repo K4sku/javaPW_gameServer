@@ -12,7 +12,6 @@ import pl.ee.gameServer.model.Player;
 import pl.ee.gameServer.repository.MatchRepository;
 import pl.ee.gameServer.repository.PlayerRepository;
 
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -22,10 +21,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Service
 @Transactional
 public class MatchMakerService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MatchMakerService.class);
     private final MatchRepository matchRepository;
     private final PlayerRepository playerRepository;
-    private static final Logger LOGGER = LoggerFactory.getLogger(MatchMakerService.class);
-
     private final LinkedBlockingQueue<QueuedPlayer> waitingPlayers = new LinkedBlockingQueue<>(100);
     private final LinkedBlockingQueue<Match> waitingMatches = new LinkedBlockingQueue<>(100);
 
@@ -35,15 +33,13 @@ public class MatchMakerService {
         loadWaitingGames();
     }
 
-    public void addPlayerToQueue(Player player, char[][] board)
-    {
-        LOGGER.info("Adding player {} : {} to matchmaking queue. Players waiting in queue: {}", player.getName(), player.getUuid(), waitingPlayers.size()+1);
+    public void addPlayerToQueue(Player player, char[][] board) {
+        LOGGER.info("Adding player {} : {} to matchmaking queue. Players waiting in queue: {}", player.getName(), player.getUuid(), waitingPlayers.size() + 1);
         QueuedPlayer queuedPlayer = new QueuedPlayer(player, board);
         waitingPlayers.offer(queuedPlayer);
     }
 
-    public Match matchPlayers(){
-        LOGGER.debug("waitingPlayers queue: "+ waitingPlayers);
+    public Match matchPlayers() {
         QueuedPlayer playerOne = waitingPlayers.poll(); //take p1 from queue head
         if (playerOne != null) {
             LOGGER.trace("Pool playerOne from queue {}", playerOne.getPlayer().getUuid());
@@ -53,20 +49,18 @@ public class MatchMakerService {
                 if (playerOne.getPlayer().equals(playerTwo.getPlayer())) {
                     LOGGER.trace("PlayerOne and PlayerTwo are the same, putting playerOne at the end of queue");
                     waitingPlayers.offer(playerOne); // put p1 on back of queue
-                    LOGGER.debug("waitingPlayers queue: "+ waitingPlayers);
                     return matchPlayers();
                 } else {
                     //take p2 from queue and make game with p1 and p2
                     LOGGER.trace("Two different players. Pooling playerTwo Starting new match.");
                     waitingPlayers.poll();
-                    LOGGER.debug("waitingPlayers queue: "+ waitingPlayers);
                     return initGame(playerOne.getPlayer(), playerOne.getPlayerShips(), playerTwo.getPlayer(), playerTwo.getPlayerShips());
                 }
-            } else if (waitingMatches.size() >0){ //if there are matches waiting for 2nd player
+            } else if (waitingMatches.size() > 0) { //if there are matches waiting for 2nd player
                 LOGGER.trace("No playerTwo to match, check waiting games.");
                 int matchQueueSize = waitingMatches.size();
                 Match waitingMatch;
-                for (int i =0; i < matchQueueSize; i++){ //iterate over queue
+                for (int i = 0; i < matchQueueSize; i++) { //iterate over queue
                     LOGGER.debug("waitingMatches queue size: {}, first match {}", waitingMatches.size(), waitingMatches.peek());
                     waitingMatch = waitingMatches.poll();
                     if (waitingMatch != null) { //avoid NullPointerException
@@ -93,7 +87,7 @@ public class MatchMakerService {
         return null;
     }
 
-    public Match initGame(Player playerOne, char[][] playerOneShips, Player playerTwo, char[][] playerTwoShips) {
+    private Match initGame(Player playerOne, char[][] playerOneShips, Player playerTwo, char[][] playerTwoShips) {
         Match match = new Match();
         match.wipeShootsBoard();
         match.setUuid(UUID.randomUUID());
@@ -123,7 +117,7 @@ public class MatchMakerService {
         return match;
     }
 
-    public Match initOnePlayerGame(Player playerOne, char[][] playerOneShips){
+    private Match initOnePlayerGame(Player playerOne, char[][] playerOneShips) {
         Match match = new Match();
         match.wipeShootsBoard();
         match.setUuid(UUID.randomUUID());
@@ -139,7 +133,7 @@ public class MatchMakerService {
         return match;
     }
 
-    public void fillPlayerTwo(Match match, Player playerTwo, char[][] playerTwoShips){
+    private void fillPlayerTwo(Match match, Player playerTwo, char[][] playerTwoShips) {
         match.setPlayerTwoShips(playerTwoShips);
         match.calculateAndSetPlayerTwoFieldsRemaining();
         match.calculateAndSetPlayerTwoShipsRemainingMap();
@@ -157,28 +151,32 @@ public class MatchMakerService {
         playerRepository.save(playerTwo);
     }
 
-    private void loadWaitingGames(){
+    private void loadWaitingGames() {
         List<Match> matches = matchRepository.findNotStartedGames();
-        for (Match match: matches) {
+        for (Match match : matches) {
             waitingMatches.offer(match);
         }
     }
 
     @AllArgsConstructor
     private static class QueuedPlayer {
-        @Getter @Setter private Player player;
-        @Getter @Setter private char[][] playerShips;
+        @Getter
+        @Setter
+        private Player player;
+        @Getter
+        @Setter
+        private char[][] playerShips;
 
         @Override
-        public boolean equals(Object o){
+        public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof QueuedPlayer)) return false;
             return player != null && player.equals(((QueuedPlayer) o).getPlayer()) && playerShips != null && Arrays.deepEquals(playerShips, ((QueuedPlayer) o).getPlayerShips());
         }
 
         @Override
-        public String toString(){
-            return "player [uuid: "+player.getUuid().toString()+" name: "+player.getName()+"]";
+        public String toString() {
+            return "player [uuid: " + player.getUuid().toString() + " name: " + player.getName() + "]";
         }
     }
 }

@@ -148,32 +148,6 @@ public class Match {
         }
         this.playerTwoShipsRemainingMap = playerShipsRemainingMap;
     }
-    @JsonIgnore
-    public void decrementPlayerOneFieldsRemaining(){
-        int remainingFields = playerOneFieldsRemainingCount;
-        playerOneFieldsRemainingCount = remainingFields - 1;
-
-    }
-    @JsonIgnore
-    public void registerHitShipByPlayerOne(int shipType){
-        int remainingFields = playerTwoFieldsRemainingCount;
-        playerTwoFieldsRemainingCount = remainingFields - 1;
-        playerTwoShipsRemainingMap.computeIfPresent(Character.forDigit(shipType, 10), (k, v) -> {
-            v -= 1;
-            if (v == 0) return null;
-            return v;
-        });
-    }
-    @JsonIgnore
-    public void registerHitShipByPlayerTwo(int shipType){
-        int remainingFields = playerOneFieldsRemainingCount;
-        playerOneFieldsRemainingCount = remainingFields - 1;
-        playerOneShipsRemainingMap.computeIfPresent(Character.forDigit(shipType, 10), (k, v) -> {
-            v -= 1;
-            if (v == 0) return null;
-            return v;
-        });
-    }
 
     @JsonIgnore
     public void registerHit(Player shootingPlayer, int shipType){
@@ -193,18 +167,6 @@ public class Match {
                 return v;
             });
         }
-    }
-
-    @JsonIgnore
-    public String shortString(){
-        return "match UUID: "+uuid.toString()+" playerOne [name: "+playerOne.getName()+" uuid: "+playerOne.getUuid()+" ] "+" playerTwo [name: "+playerTwo.getName()+" uuid: "+playerTwo.getUuid()+" ]";
-    }
-
-    @JsonIgnore
-    public Player selectPlayer(Player player){
-        if(playerOne.equals(player)) return playerOne;
-        if(playerTwo.equals(player)) return playerTwo;
-        return null;
     }
 
     @JsonIgnore
