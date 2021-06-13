@@ -40,12 +40,12 @@ public class MatchMakerService {
     }
 
     public Match matchPlayers() {
-        QueuedPlayer playerOne = waitingPlayers.poll(); //take p1 from queue head
+        QueuedPlayer playerOne = waitingPlayers.poll(); //poll p1 from queue head
         if (playerOne != null) {
             LOGGER.trace("Pool playerOne from queue {}", playerOne.getPlayer().getUuid());
-            QueuedPlayer playerTwo = waitingPlayers.peek(); //get p2, but leave on queue head
+            QueuedPlayer playerTwo = waitingPlayers.poll(); //poll p2 from queue head
             if (playerTwo != null) {
-                LOGGER.trace("Peek playerTwo from queue {}", playerTwo.getPlayer().getUuid());
+                LOGGER.trace("Pool playerTwo from queue {}", playerTwo.getPlayer().getUuid());
                 if (playerOne.getPlayer().equals(playerTwo.getPlayer())) {
                     LOGGER.trace("PlayerOne and PlayerTwo are the same, putting playerOne at the end of queue");
                     waitingPlayers.offer(playerOne); // put p1 on back of queue
@@ -53,9 +53,9 @@ public class MatchMakerService {
                 } else {
                     //take p2 from queue and make game with p1 and p2
                     LOGGER.trace("Two different players. Pooling playerTwo Starting new match.");
-                    waitingPlayers.poll();
                     return initGame(playerOne.getPlayer(), playerOne.getPlayerShips(), playerTwo.getPlayer(), playerTwo.getPlayerShips());
                 }
+
             } else if (waitingMatches.size() > 0) { //if there are matches waiting for 2nd player
                 LOGGER.trace("No playerTwo to match, check waiting games.");
                 int matchQueueSize = waitingMatches.size();

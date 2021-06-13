@@ -23,5 +23,4 @@ public class GameServer {
         return String.format("Hello %s!", name);
     }
 
-
 }

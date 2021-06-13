@@ -55,8 +55,8 @@ public class MatchMakerServiceTests {
 
 
         playerTwo = new Player();
-        playerOne.setName("playerTwo");
-        playerOne.setUuid(UUID.randomUUID());
+        playerTwo.setName("playerTwo");
+        playerTwo.setUuid(UUID.randomUUID());
         playerTwoBoard = new char[][]{
                 {'0', '0', '0', '0', '0', '0', '0', '1', '1', '0'},
                 {'0', '5', '0', '0', '0', '0', '0', '0', '0', '0'},
@@ -96,7 +96,8 @@ public class MatchMakerServiceTests {
     public void shouldStartNewGameIfAddingTwoPlayers() {
         matchMakerService.addPlayerToQueue(playerOne, playerOneBoard);
         matchMakerService.addPlayerToQueue(playerTwo, playerTwoBoard);
-        var match = matchMakerService.matchPlayers();
+        Match match = matchMakerService.matchPlayers();
+
         verify(mockedMatchRepository, times(1)).save(any(Match.class));
         verify(mockedPlayerRepository, times(2)).save(any(Player.class));
 
@@ -116,9 +117,25 @@ public class MatchMakerServiceTests {
     }
 
     @Test
+    public void shouldNotMatchPlayerWithHimself() {
+        matchMakerService.addPlayerToQueue(playerOne, playerOneBoard);
+        matchMakerService.addPlayerToQueue(playerOne, playerOneBoard);
+        Match match = matchMakerService.matchPlayers();
+
+        assertThat(match).isInstanceOf(Match.class);
+        assertThat(match.getPlayerOne()).isEqualTo(playerOne);
+        assertThat(match.getPlayerOneShips()).isDeepEqualTo(playerOneBoard);
+        assertThat(match.getPlayerOneShots()).isDeepEqualTo(emptyShots);
+        assertThat(match.getPlayerOneFieldsRemainingCount()).isEqualTo(17); // 17 is number of non empty ships in new game
+        assertThat(match.getPlayerOneShipsRemainingMap()).isEqualTo(newMatchShipsRemainingMap);
+        assertThat(match.getPlayerTwo()).isNull();
+        assertThat(match.isActive()).isFalse();
+    }
+
+    @Test
     public void shouldStartNewGameIfAddingOnePlayer() {
         matchMakerService.addPlayerToQueue(playerOne, playerOneBoard);
-        var match = matchMakerService.matchPlayers();
+        Match match = matchMakerService.matchPlayers();
         verify(mockedMatchRepository, times(1)).save(any(Match.class));
         verify(mockedPlayerRepository, times(1)).save(any(Player.class));
 
@@ -135,10 +152,9 @@ public class MatchMakerServiceTests {
     @Test
     public void shouldFillGameWithSecondPlayer() {
         matchMakerService.addPlayerToQueue(playerOne, playerOneBoard);
-        var match = matchMakerService.matchPlayers();
+        Match match = matchMakerService.matchPlayers();
         matchMakerService.addPlayerToQueue(playerTwo, playerTwoBoard);
-        var matchTwo = matchMakerService.matchPlayers();
-
+        Match matchTwo = matchMakerService.matchPlayers();
         assertThat(match).isInstanceOf(Match.class);
         assertThat(match).isEqualTo(matchTwo);
         assertThat(match.getPlayerOne()).isEqualTo(playerOne);
