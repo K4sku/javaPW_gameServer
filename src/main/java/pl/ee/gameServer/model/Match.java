@@ -47,13 +47,11 @@ public class Match {
     @JsonIgnore
     @Column(columnDefinition = "BLOB")
     private char[][] playerOneShots = new char[GameServer.BOARD_SIZE][GameServer.BOARD_SIZE];
-    @JsonIgnore
     @Column(columnDefinition = "BLOB")
     private char[][] playerOneShips = new char[GameServer.BOARD_SIZE][GameServer.BOARD_SIZE];
     @JsonIgnore
     @Column(columnDefinition = "BLOB")
     private char[][] playerTwoShots = new char[GameServer.BOARD_SIZE][GameServer.BOARD_SIZE];
-    @JsonIgnore
     @Column(columnDefinition = "BLOB")
     private char[][] playerTwoShips = new char[GameServer.BOARD_SIZE][GameServer.BOARD_SIZE];
 

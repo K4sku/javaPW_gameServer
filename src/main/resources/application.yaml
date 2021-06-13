@@ -17,8 +17,6 @@ spring:
   jpa:
     properties:
       hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
-#      hibernate.format_sql: true
-#    show-sql: true
     hibernate.ddl-auto: create-drop
   sql:
     init:
@@ -27,12 +25,6 @@ server:
   port: 8080
   tomcat:
     connection-timeout: -1
-#  ssl:
-#    key-store-type: PKCS12
-#    key-store: src/main/resources/ships.p12
-#    key-store-password: boomboom
-#    key-alias: ships
-#  error.whitelabel.enabled: false
 
 management:
   endpoints:
@@ -61,10 +53,6 @@ spring:
     activate:
       on-profile: production
   datasource:
-#    user
-#    username: gameServerUser
-#    password: P4r4g0nF1skalny
-#    root
     username: root
     password: 9v5i0kxlEEz4uxCL
     driver-class-name: com.mysql.cj.jdbc.Driver
