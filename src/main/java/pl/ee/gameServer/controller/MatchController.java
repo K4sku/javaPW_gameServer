@@ -1,14 +1,15 @@
 package pl.ee.gameServer.controller;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.ee.gameServer.model.Match;
-import pl.ee.gameServer.service.Coordinate;
-import pl.ee.gameServer.service.GameLoopService;
-import pl.ee.gameServer.service.MatchService;
+import pl.ee.gameServer.model.Player;
+import pl.ee.gameServer.service.*;
+
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -20,10 +21,12 @@ public class MatchController {
     private static final Logger LOGGER = LoggerFactory.getLogger(MatchController.class);
 
     final MatchService matchService;
+    final MatchMakerService matchMakerService;
     final GameLoopService gameLoopService;
 
-    public MatchController(MatchService matchService, GameLoopService gameLoopService) {
+    public MatchController(MatchService matchService, GameLoopService gameLoopService, MatchMakerService matchMakerService) {
         this.matchService = matchService;
+        this.matchMakerService = matchMakerService;
         this.gameLoopService = gameLoopService;
     }
 
@@ -52,6 +55,23 @@ public class MatchController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    @PostMapping("/new_game")
+    public ResponseEntity<Match> newMatchmaking(@RequestBody Map<String, Object> body) {
+        Match match;
+        try {
+            UUID playerUuid = UUID.fromString((String) body.get("player-uuid"));
+            LOGGER.info("Received new match request for player uuid: {}", playerUuid);
+            char[][] board = BoardService.parseToCharArray((String) body.get("board"));
+            matchMakerService.addPlayerToQueue(playerUuid, board);
+            match = matchMakerService.matchPlayers();
+            return new ResponseEntity<>(match, HttpStatus.OK);
+        } catch (Exception e) {
+            LOGGER.debug(e.toString());
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
+
 
     @PostMapping("/{uuid}/shoot")
     public ResponseEntity<?> shoot(@RequestBody Map<String, Object> body, @PathVariable UUID uuid){

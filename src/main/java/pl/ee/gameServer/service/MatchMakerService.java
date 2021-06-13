@@ -3,14 +3,13 @@ package pl.ee.gameServer.service;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.ee.gameServer.model.Match;
 import pl.ee.gameServer.model.Player;
-import pl.ee.gameServer.repository.MatchRepository;
-import pl.ee.gameServer.repository.PlayerRepository;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,18 +21,26 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Transactional
 public class MatchMakerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MatchMakerService.class);
-    private final MatchRepository matchRepository;
-    private final PlayerRepository playerRepository;
+    private final MatchService matchService;
+    private final PlayerService playerService;
     private final LinkedBlockingQueue<QueuedPlayer> waitingPlayers = new LinkedBlockingQueue<>(100);
     private final LinkedBlockingQueue<Match> waitingMatches = new LinkedBlockingQueue<>(100);
 
-    public MatchMakerService(MatchRepository matchRepository, PlayerRepository playerRepository) {
-        this.matchRepository = matchRepository;
-        this.playerRepository = playerRepository;
+    public MatchMakerService(MatchService matchService, PlayerService playerService) {
+        this.matchService = matchService;
+        this.playerService = playerService;
         loadWaitingGames();
     }
 
     public void addPlayerToQueue(Player player, char[][] board) {
+        LOGGER.info("Adding player {} : {} to matchmaking queue. Players waiting in queue: {}", player.getName(), player.getUuid(), waitingPlayers.size() + 1);
+        QueuedPlayer queuedPlayer = new QueuedPlayer(player, board);
+        waitingPlayers.offer(queuedPlayer);
+    }
+
+    public void addPlayerToQueue(UUID playerUuid, char[][] board) {
+        Player player = playerService.getPlayer(playerUuid);
+        Hibernate.initialize(player.getPlayerOneGames());
         LOGGER.info("Adding player {} : {} to matchmaking queue. Players waiting in queue: {}", player.getName(), player.getUuid(), waitingPlayers.size() + 1);
         QueuedPlayer queuedPlayer = new QueuedPlayer(player, board);
         waitingPlayers.offer(queuedPlayer);
@@ -109,11 +116,11 @@ public class MatchMakerService {
             LOGGER.trace("First shooting player {}", playerTwo.getUuid());
         }
 
-        matchRepository.save(match);
+        matchService.saveMatch(match);
         playerOne.addPlayerOneGame(match);
-        playerRepository.save(playerOne);
+        playerService.savePlayer(playerOne);
         playerTwo.addPlayerTwoGame(match);
-        playerRepository.save(playerTwo);
+        playerService.savePlayer(playerTwo);
         return match;
     }
 
@@ -126,9 +133,10 @@ public class MatchMakerService {
         match.calculateAndSetPlayerOneFieldsRemaining();
         match.calculateAndSetPlayerOneShipsRemainingMap();
 
-        matchRepository.save(match);
+        matchService.saveMatch(match);
         playerOne.addPlayerOneGame(match);
-        playerRepository.save(playerOne);
+        playerService.savePlayer(playerOne);
+
 
         return match;
     }
@@ -148,11 +156,13 @@ public class MatchMakerService {
             LOGGER.trace("First shooting player {}", playerTwo.getUuid());
         }
         playerTwo.addPlayerTwoGame(match);
-        playerRepository.save(playerTwo);
+//        playerRepository.save(playerTwo);
+        playerService.savePlayer(playerTwo);
+
     }
 
     private void loadWaitingGames() {
-        List<Match> matches = matchRepository.findNotStartedGames();
+        List<Match> matches = matchService.listNotStartedGames();
         for (Match match : matches) {
             waitingMatches.offer(match);
         }
