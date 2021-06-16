@@ -1,6 +1,7 @@
 package pl.ee.gameServer.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -16,6 +17,10 @@ public class Player {
     @Column(nullable = false, columnDefinition = "BINARY(16)")
     @Type(type="org.hibernate.type.UUIDBinaryType")
     private UUID uuid;
+
+    @JsonView(Views.Private.class)
+    @Type(type="org.hibernate.type.UUIDBinaryType")
+    private UUID privateToken;
     @Column(length = 100)
     private String name;
     @Column

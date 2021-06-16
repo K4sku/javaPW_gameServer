@@ -156,7 +156,6 @@ public class MatchMakerService {
             LOGGER.trace("First shooting player {}", playerTwo.getUuid());
         }
         playerTwo.addPlayerTwoGame(match);
-//        playerRepository.save(playerTwo);
         playerService.savePlayer(playerTwo);
 
     }
