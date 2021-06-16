@@ -7,7 +7,9 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 import pl.ee.gameServer.model.Match;
+import pl.ee.gameServer.model.Player;
 import pl.ee.gameServer.model.Views;
 import pl.ee.gameServer.service.*;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.concurrent.ForkJoinPool;
 
 @RestController
 @RequestMapping("/matches")
@@ -107,6 +110,43 @@ public class MatchController {
             LOGGER.debug(e.toString());
         }
         return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    //TODO finish this one
+    @JsonView(Views.Public.class)
+    @GetMapping("/{matchUuid}/turn")
+    public DeferredResult<?> checkTurn(@RequestBody Map<String, Object> body, @PathVariable UUID matchUuid) {
+        DeferredResult<ResponseEntity<?>> output = new DeferredResult<>();
+        output.onCompletion(() ->
+                output.setResult(ResponseEntity.ok("ok")));
+        output.onTimeout(() ->
+                output.setErrorResult(
+                        ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
+                        .body("Request timeout occured")
+                ));
+        ForkJoinPool.commonPool().submit(() -> {
+            LOGGER.info("Processing in separate thread");
+            try {
+                Thread.sleep(6000);
+            } catch (InterruptedException e) {
+            }
+            output.setResult(ResponseEntity.ok("ok"));
+        });
+        try {
+            UUID playerUuid = UUID.fromString((String) body.get("player-uuid"));
+            UUID privateToken = UUID.fromString((String) body.get("privateToken"));
+            Match match = matchService.getMatch(matchUuid);
+            Player player = playerService.getPlayer(playerUuid);
+            if (playerService.isPrivateTokenValid(playerUuid, privateToken) && gameLoopService.isPlayerInMatch(match, player)) {
+                gameLoopService.waitForTurn(match, player);
+            } else {
+//                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+        } catch (Exception e) {
+            LOGGER.debug(e.toString());
+        }
+
+//        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @JsonView(Views.Public.class)

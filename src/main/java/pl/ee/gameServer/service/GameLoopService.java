@@ -12,6 +12,7 @@ import pl.ee.gameServer.model.Player;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Transactional
@@ -20,6 +21,7 @@ public class GameLoopService {
 
     final MatchService matchService;
     final PlayerService playerService;
+    private final ConcurrentHashMap<UUID, Match> matchesTurns = new ConcurrentHashMap();
 
     public GameLoopService(MatchService matchService, PlayerService playerService) {
         this.matchService = matchService;
@@ -37,8 +39,9 @@ public class GameLoopService {
         int hit;
         boolean sink = false;
         try {
-            Match match = matchService.getMatch(matchUuid); //check if game exist
-            Player shootingPlayer = playerService.getPlayer(playerUuid); //check if player exist
+            Match match = matchService.getMatch(matchUuid);
+            matchesTurns.putIfAbsent(matchUuid, match);
+            Player shootingPlayer = playerService.getPlayer(playerUuid);
             //check if player is in game
             if (!match.getPlayersList().contains(shootingPlayer)) return Pair.of(-1, "Player is not in game");
             LOGGER.trace("player is in match");
@@ -66,6 +69,7 @@ public class GameLoopService {
                 }
                 registerPlayerShot(match, shootingPlayer, shootLocation, hit, sink);
                 LOGGER.trace("It's playerOne shoot at {} shot landed on {}, sink: {}", shootLocation, hit, sink);
+                notifyAll();
 
                 if (checkWinCondition(match)) return Pair.of(10, "Game over");
                 if (hit != 0 && hit != -1) return Pair.of(hit, "HIT");
@@ -79,6 +83,27 @@ public class GameLoopService {
             LOGGER.debug(String.valueOf(e));
         }
         return null;
+    }
+
+    public boolean isPlayerInMatch(Match match, Player player) {
+        return match.getPlayersList().contains(player);
+    }
+
+    public boolean isPlayerTurn(Match match, Player player) {
+        return  match.getShootingPlayer().equals(player);
+    }
+
+    public boolean waitForTurn(Match match, Player player) throws InterruptedException {
+        matchesTurns.putIfAbsent(match.getUuid(), match);
+        //check if it's this player turn
+        while (!matchesTurns.get(match.getUuid()).getShootingPlayer().equals(player)){
+            wait();
+        }
+        if (match.getShootingPlayer().equals(player)) {
+            LOGGER.trace("It's not player: {} turn yet.", player.getUuid());
+            return true;
+        }
+        return false;
     }
 
     /**
