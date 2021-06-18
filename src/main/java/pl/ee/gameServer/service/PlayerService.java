@@ -31,4 +31,17 @@ public class PlayerService {
     public void deletePlayer(UUID uuid) {
         playerRepository.deleteById(uuid);
     }
+
+    public boolean isPrivateTokenValid(UUID playerUuid, UUID token) {
+        Player player = null;
+        try {
+            if (playerRepository.findById(playerUuid).isPresent())
+                player = playerRepository.findById(playerUuid).get();
+            assert player != null;
+            return player.getPrivateToken().equals(token);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

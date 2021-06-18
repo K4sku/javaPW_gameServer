@@ -11,7 +11,7 @@
 
     <groupId>pl.ee</groupId>
     <artifactId>gameServer</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <name>shipsGameServer</name>
     <description>Server for ships game</description>
 

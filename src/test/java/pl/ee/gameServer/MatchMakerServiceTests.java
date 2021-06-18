@@ -8,9 +8,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.ee.gameServer.model.Match;
 import pl.ee.gameServer.model.Player;
-import pl.ee.gameServer.repository.MatchRepository;
-import pl.ee.gameServer.repository.PlayerRepository;
 import pl.ee.gameServer.service.MatchMakerService;
+import pl.ee.gameServer.service.MatchService;
+import pl.ee.gameServer.service.PlayerService;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -29,9 +29,9 @@ public class MatchMakerServiceTests {
     HashMap<Character, Integer> newMatchShipsRemainingMap;
     char[][] emptyShots;
     @Mock
-    MatchRepository mockedMatchRepository;
+    MatchService mockedMatchService;
     @Mock
-    PlayerRepository mockedPlayerRepository;
+    PlayerService mockedPlayerService;
     @InjectMocks
     MatchMakerService matchMakerService;
 
@@ -83,7 +83,7 @@ public class MatchMakerServiceTests {
                 {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0'}
         };
 
-        matchMakerService = new MatchMakerService(mockedMatchRepository, mockedPlayerRepository);
+        matchMakerService = new MatchMakerService(mockedMatchService, mockedPlayerService);
         newMatchShipsRemainingMap = new HashMap<>(5);
         newMatchShipsRemainingMap.put('1',2);
         newMatchShipsRemainingMap.put('2',3);
@@ -98,8 +98,8 @@ public class MatchMakerServiceTests {
         matchMakerService.addPlayerToQueue(playerTwo, playerTwoBoard);
         Match match = matchMakerService.matchPlayers();
 
-        verify(mockedMatchRepository, times(1)).save(any(Match.class));
-        verify(mockedPlayerRepository, times(2)).save(any(Player.class));
+        verify(mockedMatchService, times(1)).saveMatch(any(Match.class));
+        verify(mockedPlayerService, times(2)).savePlayer(any(Player.class));
 
         assertThat(match).isInstanceOf(Match.class);
         assertThat(match.getPlayerOne()).isEqualTo(playerOne);
@@ -136,8 +136,9 @@ public class MatchMakerServiceTests {
     public void shouldStartNewGameIfAddingOnePlayer() {
         matchMakerService.addPlayerToQueue(playerOne, playerOneBoard);
         Match match = matchMakerService.matchPlayers();
-        verify(mockedMatchRepository, times(1)).save(any(Match.class));
-        verify(mockedPlayerRepository, times(1)).save(any(Player.class));
+
+        verify(mockedMatchService, times(1)).saveMatch(any(Match.class));
+        verify(mockedPlayerService, times(1)).savePlayer(any(Player.class));
 
         assertThat(match).isInstanceOf(Match.class);
         assertThat(match.getPlayerOne()).isEqualTo(playerOne);
@@ -170,7 +171,7 @@ public class MatchMakerServiceTests {
         assertThat(match.getPlayerTwoShipsRemainingMap()).isEqualTo(newMatchShipsRemainingMap);
         assertThat(match.isActive()).isTrue();
 
-        verify(mockedMatchRepository, times(1)).save(any(Match.class));
-        verify(mockedPlayerRepository, times(2)).save(any(Player.class));
+        verify(mockedMatchService, times(1)).saveMatch(any(Match.class));
+        verify(mockedPlayerService, times(2)).savePlayer(any(Player.class));
     }
 }

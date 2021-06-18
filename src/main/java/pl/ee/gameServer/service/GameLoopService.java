@@ -12,6 +12,7 @@ import pl.ee.gameServer.model.Player;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Transactional
@@ -37,8 +38,8 @@ public class GameLoopService {
         int hit;
         boolean sink = false;
         try {
-            Match match = matchService.getMatch(matchUuid); //check if game exist
-            Player shootingPlayer = playerService.getPlayer(playerUuid); //check if player exist
+            Match match = matchService.getMatch(matchUuid);
+            Player shootingPlayer = playerService.getPlayer(playerUuid);
             //check if player is in game
             if (!match.getPlayersList().contains(shootingPlayer)) return Pair.of(-1, "Player is not in game");
             LOGGER.trace("player is in match");
@@ -80,6 +81,15 @@ public class GameLoopService {
         }
         return null;
     }
+
+    public boolean isPlayerInMatch(Match match, Player player) {
+        return match.getPlayersList().contains(player);
+    }
+
+    public boolean isPlayerTurn(Match match, Player player) {
+        return  match.getShootingPlayer().equals(player);
+    }
+
 
     /**
      * Validates that shot was inside game board bounds
