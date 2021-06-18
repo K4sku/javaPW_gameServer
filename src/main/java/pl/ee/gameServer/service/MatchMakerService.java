@@ -105,7 +105,6 @@ public class MatchMakerService {
         match.setPlayerTwoShips(playerTwoShips);
         match.calculateAndSetPlayerTwoFieldsRemaining();
         match.calculateAndSetPlayerTwoShipsRemainingMap();
-        match.setActive(true);
         LOGGER.trace("Match set as active");
         Random rd = new Random();
         if (rd.nextBoolean()) {
@@ -116,6 +115,7 @@ public class MatchMakerService {
             LOGGER.trace("First shooting player {}", playerTwo.getUuid());
         }
 
+        match.setActive(true);
         matchService.saveMatch(match);
         playerOne.addPlayerOneGame(match);
         playerService.savePlayer(playerOne);
@@ -126,8 +126,8 @@ public class MatchMakerService {
 
     private Match initOnePlayerGame(Player playerOne, char[][] playerOneShips) {
         Match match = new Match();
-        match.wipeShootsBoard();
         match.setUuid(UUID.randomUUID());
+        match.wipeShootsBoard();
         LOGGER.trace("New game UUID: {}", match.getUuid());
         match.setPlayerOneShips(playerOneShips);
         match.calculateAndSetPlayerOneFieldsRemaining();
@@ -136,7 +136,6 @@ public class MatchMakerService {
         matchService.saveMatch(match);
         playerOne.addPlayerOneGame(match);
         playerService.savePlayer(playerOne);
-
 
         return match;
     }
@@ -157,7 +156,6 @@ public class MatchMakerService {
         }
         playerTwo.addPlayerTwoGame(match);
         playerService.savePlayer(playerTwo);
-
     }
 
     private void loadWaitingGames() {
